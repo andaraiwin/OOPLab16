@@ -11,7 +11,7 @@ public class Parser {
     private AST parseE() {
         AST ast = parseT();
         while (tkz.peek("+") || tkz.peek("-")) {
-            ast = new Grammar.E(ast, tkz.consume(), parseT());
+            ast = ArithExprFactory.getInstance().newArithmetic(ast, tkz.consume(), parseT());
         }
         return ast;
     }
@@ -19,22 +19,22 @@ public class Parser {
     private AST parseT() {
         AST ast = parseF();
         while (tkz.peek("*") || tkz.peek("/") || tkz.peek("%")) {
-            ast = new Grammar.T(ast, tkz.consume(), parseF());
+            ast = ArithExprFactory.getInstance().newArithmetic(ast, tkz.consume(), parseF());
         }
         return ast;
     }
 
 
-    private Grammar.F parseF() {
+    private Grammar.Atomic parseF() {
         String value = tkz.peek();
         Matcher matcher = Pattern.compile("^\\d+|\\w+$").matcher(value);
         if (matcher.find()) {
-            return new Grammar.F(tkz.consume());
+            return ArithExprFactory.getInstance().newArithmetic(tkz.consume());
         } else {
             tkz.consume("(");
-            Grammar.F f = new Grammar.F(parseE());
+            Grammar.Atomic atomic = ArithExprFactory.getInstance().newArithmetic(parseE());
             tkz.consume(")");
-            return f;
+            return atomic;
         }
     }
 

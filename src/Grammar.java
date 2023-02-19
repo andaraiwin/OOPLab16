@@ -2,7 +2,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class Grammar {
-    private static abstract class BinaryArithmetic implements AST {
+    public static class BinaryArithmetic implements AST {
         private AST lhs, rhs;
         private String op;
 
@@ -20,54 +20,38 @@ public class Grammar {
             rhs.prettyPrint(builder);
             builder.append(')');
         }
-    }
 
-    public static class T extends BinaryArithmetic {
-        public T(AST lhs, String op, AST rhs) {
-            super(lhs, op, rhs);
-        }
 
         @Override
         public int eval(Map<String, Integer> bindings) {
-            switch (super.op) {
-                case "*":
-                    return super.lhs.eval(bindings) * super.rhs.eval(bindings);
-                case "/":
-                    if (super.rhs.eval(bindings) == 0) throw new Exception.ArithmeticError("Can't be divided by zero");
-                    return super.lhs.eval(bindings) / super.rhs.eval(bindings);
-                case "%":
-                    if (super.rhs.eval(bindings) == 0) throw new Exception.ArithmeticError("Can't be modulo by zero");
-                    return super.lhs.eval(bindings) % super.rhs.eval(bindings);
-                default:
-                    throw new Exception.OperatorNotFound(super.op);
-            }
-        }
-    }
-
-    public static class E extends BinaryArithmetic {
-        public E(AST lhs, String op, AST rhs) {
-            super(lhs, op, rhs);
-        }
-
-        @Override
-        public int eval(Map<String, Integer> bindings) {
-            return switch (super.op) {
-                case "+" -> super.lhs.eval(bindings) + super.rhs.eval(bindings);
-                case "-" -> super.lhs.eval(bindings) - super.rhs.eval(bindings);
-                default -> throw new Exception.OperatorNotFound(super.op);
+            return switch (op) {
+                case "+" -> lhs.eval(bindings) + rhs.eval(bindings);
+                case "-" -> lhs.eval(bindings) - rhs.eval(bindings);
+                case "*" -> lhs.eval(bindings) * rhs.eval(bindings);
+                case "/" -> {
+                    if (rhs.eval(bindings) == 0) throw new Exception.ArithmeticError("Can't be divided by zero");
+                    yield lhs.eval(bindings) / rhs.eval(bindings);
+                }
+                case "%" -> {
+                    if (rhs.eval(bindings) == 0) throw new Exception.ArithmeticError("Can't be modulo by zero");
+                    yield lhs.eval(bindings) % rhs.eval(bindings);
+                }
+                default -> throw new Exception.OperatorNotFound(op);
             };
         }
     }
 
-    public static class F implements AST {
+
+
+    public static class Atomic implements AST {
         private String n;
         private AST ast;
 
-        public F(AST ast) {
+        public Atomic(AST ast) {
             this.ast = ast;
         }
 
-        public F(String n) {
+        public Atomic(String n) {
             this.n = n;
         }
 
